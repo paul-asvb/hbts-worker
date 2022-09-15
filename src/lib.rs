@@ -50,6 +50,12 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
         })
+        .get("/put", |_, ctx| {
+            match ctx.durable_object("some_namespace") {
+                Ok(_dur_obj) => Response::ok("worked"),
+                Err(_) => return Response::error("Bad Request", 400),
+            }
+        })
         .run(req, env)
         .await
 }
