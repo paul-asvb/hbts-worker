@@ -53,7 +53,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get("/put", |_, ctx| {
             match ctx.durable_object("some_namespace") {
                 Ok(_dur_obj) => Response::ok("worked"),
-                Err(_) => return Response::error("Bad Request", 400),
+                Err(err) => return Response::error(err.to_string(), 400),
             }
         })
         .run(req, env)
