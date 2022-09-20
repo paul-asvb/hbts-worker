@@ -6,6 +6,11 @@ compatibility_date = "2022-09-10"
 [vars]
 WORKERS_RS_VERSION = "0.0.9"
 
+[[r2_buckets]]
+binding = 'hbtsworker' # <~ valid JavaScript variable name
+bucket_name = 'hbts-worker'
+preview_bucket_name = 'hbts-worker'
+
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required
 

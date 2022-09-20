@@ -12,7 +12,6 @@ fn log_request(req: &Request) {
         req.cf().region().unwrap_or("unknown region".into())
     );
 }
-
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
@@ -50,11 +49,9 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
         })
-        .get("/put", |_, ctx| {
-            match ctx.durable_object("some_namespace") {
-                Ok(_dur_obj) => Response::ok("worked"),
-                Err(err) => return Response::error(err.to_string(), 400),
-            }
+        .get("/put", |_, _ctx| match env.secret("hbts") {
+            Ok(_dur_obj) => Response::ok("worked"),
+            Err(err) => return Response::error(err.to_string(), 400),
         })
         .run(req, env)
         .await
