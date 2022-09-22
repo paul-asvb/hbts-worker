@@ -3,6 +3,8 @@ use worker::*;
 
 mod utils;
 
+use mongodb::{options::ClientOptions, sync::Client};
+
 fn log_request(req: &Request) {
     console_log!(
         "{} - [{}], located at: {:?}, within: {}",
@@ -49,9 +51,13 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
         })
-        .get("/put", |_, _ctx| match env.secret("hbts") {
-            Ok(_dur_obj) => Response::ok("worked"),
-            Err(err) => return Response::error(err.to_string(), 400),
+        .get("/mongo", |_, _ctx| {
+            // let client_options = ClientOptions::parse(
+            //     "mongodb+srv://db-user:<password>@cluster0.qpyuzrw.mongodb.net/?retryWrites=true&w=majority",
+            // ).await;
+            // let client = Client::with_options(client_options)?;
+            // let database = client.database("testDB");
+            Response::error("Bad Request", 400)
         })
         .run(req, env)
         .await
