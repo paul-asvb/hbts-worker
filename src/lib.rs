@@ -31,32 +31,27 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
         .get("/", |_, _| Response::ok("Hello from Workers!"))
-        .post_async("/form/:field", |mut req, ctx| async move {
-            if let Some(name) = ctx.param("field") {
-                let form = req.form_data().await?;
-                match form.get(name) {
-                    Some(FormEntry::Field(value)) => {
-                        return Response::from_json(&json!({ name: value }))
-                    }
-                    Some(FormEntry::File(_)) => {
-                        return Response::error("`field` param in form shouldn't be a File", 422);
-                    }
-                    None => return Response::error("Bad Request", 400),
-                }
-            }
-
-            Response::error("Bad Request", 400)
+        .post_async("/:habit/:id", |mut req, ctx| async move {
+            let habit = match ctx.param("habit"){
+                Some(s) => s,
+                None => return Response::error("no habit param found", 405),
+            };
+            let id = match ctx.param("id"){
+                Some(s) => s,
+                None => return Response::error("no id param found", 405),
+            };
+             Response::ok(format!("habit: {},  id: {}",habit,id))
         })
         .get("/worker-version", |_, ctx| {
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
         })
-        .get("/mongo", |_, _ctx| {
-            // let client_options = ClientOptions::parse(
-            //     "mongodb+srv://db-user:<password>@cluster0.qpyuzrw.mongodb.net/?retryWrites=true&w=majority",
-            // ).await;
-            // let client = Client::with_options(client_options)?;
-            // let database = client.database("testDB");
+        .get_async("/mongo", |_, _ctx| async {
+            let client_options = ClientOptions::parse(
+                "mongodb+srv://db-user:<password>@cluster0.qpyuzrw.mongodb.net/?retryWrites=true&w=majority",
+            ).await.map_err(|_|Response::error("Bad Request", 400));
+             let client = Client::with_options(client_options)?;
+             let database = client.database("testDB");
             Response::error("Bad Request", 400)
         })
         .run(req, env)
