@@ -1,9 +1,5 @@
-use serde_json::json;
 use worker::*;
-
 mod utils;
-
-use mongodb::{options::ClientOptions, sync::Client};
 
 fn log_request(req: &Request) {
     console_log!(
@@ -14,6 +10,11 @@ fn log_request(req: &Request) {
         req.cf().region().unwrap_or("unknown region".into())
     );
 }
+
+struct bla {
+    name: String,
+}
+
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
@@ -31,27 +32,29 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
         .get("/", |_, _| Response::ok("Hello from Workers!"))
-        .post_async("/:habit/:id", |mut req, ctx| async move {
-            let habit = match ctx.param("habit"){
+        .get_async("/habits", |_req, ctx| async {
+            let json = serde_json::json!({
+            "habits":[
+                "cigarettes","logging"
+            ]});
+            Response::from_json(&json)
+        })
+        .post_async("/habits/:habit/:id", |mut req, ctx| async move {
+            let habit = match ctx.param("habit") {
                 Some(s) => s,
                 None => return Response::error("no habit param found", 405),
             };
-            let id = match ctx.param("id"){
+            let id = match ctx.param("id") {
                 Some(s) => s,
                 None => return Response::error("no id param found", 405),
             };
-             Response::ok(format!("habit: {},  id: {}",habit,id))
+            Response::ok(format!("habit: {},  id: {}", habit, id))
         })
         .get("/worker-version", |_, ctx| {
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
         })
         .get_async("/mongo", |_, _ctx| async {
-            let client_options = ClientOptions::parse(
-                "mongodb+srv://db-user:<password>@cluster0.qpyuzrw.mongodb.net/?retryWrites=true&w=majority",
-            ).await.map_err(|_|Response::error("Bad Request", 400));
-             let client = Client::with_options(client_options)?;
-             let database = client.database("testDB");
             Response::error("Bad Request", 400)
         })
         .run(req, env)
