@@ -32,14 +32,14 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
         .get("/", |_, _| Response::ok("Hello from Workers!"))
-        .get_async("/habits", |_req, ctx| async {
+        .get_async("/habits", |_req, _ctx| async {
             let json = serde_json::json!({
             "habits":[
-                "cigarettes","logging"
+                "cigarettes","jogging","alcohol","gym","drugs"
             ]});
             Response::from_json(&json)
         })
-        .post_async("/habits/:habit/:id", |mut req, ctx| async move {
+        .post_async("/habits/:habit/:id", |_req, ctx| async move {
             let habit = match ctx.param("habit") {
                 Some(s) => s,
                 None => return Response::error("no habit param found", 405),
